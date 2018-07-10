@@ -7,7 +7,7 @@ namespace WorkingWithLinq
     class Program
     {
 
-        static IEnumerable<string> Suits()
+        public static IEnumerable<string> Suits()
         {
             yield return "clubs";
             yield return "diamonds";
@@ -34,16 +34,44 @@ namespace WorkingWithLinq
 
         static void Main(string[] args)
         {
-            
+            var startingDeck = (from suit in Suits().LogQuery("Suit Generation")
+                               from rank in Ranks().LogQuery("Rank Generation")
+                               select new {suit, rank}).LogQuery("Starting Deck")
+                               .ToArray();
 
-            var startingDeck = from suit in Suits()
-                               from rank in Ranks()
-                               select new { Suit = suit, Rank = rank };
-
-           foreach (var card in startingDeck)
-           {
+            foreach (var card in startingDeck)
+            {
                 Console.WriteLine(card);
-           }
+            }
+
+            Console.WriteLine();
+
+            var times = 0;
+            var shuffledDeck = startingDeck;
+
+            do
+            {
+                /*shuffledDeck = shuffledDeck.Take(26)
+                    .LogQuery("Top Half")
+                    .InterleaveSequenceWith(shuffledDeck.Skip(26).LogQuery("Bottom Half"))
+                    .LogQuery("Shuffle");*/
+
+                shuffledDeck = shuffledDeck.Skip(26)
+                    .LogQuery("Bottom Half")
+                    .InterleaveSequenceWith(shuffledDeck.Take(26).LogQuery("Top Half"))
+                    .LogQuery("Shuffle")
+                    .ToArray();
+
+                foreach (var card in shuffledDeck)
+                {
+                    Console.WriteLine(card);
+                }
+
+                Console.WriteLine();
+                times++;
+            } while (!startingDeck.SequenceEquals(shuffledDeck));
+
+            Console.WriteLine(times);     
         }
     }
 }
